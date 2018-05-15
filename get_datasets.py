@@ -19,11 +19,17 @@ dataset_path = "datasets/"
 model_path = "model.json"
 training_size_default = 50
 training_resolution_default = 1000
+indices_by_prefixed_subreddit = {}
+
+def get_index_for_subreddit_name_prefixed(name):
+	if name not in indices_by_prefixed_subreddit:
+		indices_by_prefixed_subreddit[name] = len(indices_by_prefixed_subreddit)
+	return indices_by_prefixed_subreddit[name]
 
 #*********************************** HELPERS ***********************************
 def download(training_size):
 	print("Downloading training data...")
-	model = []
+	posts = []
 	reddit = praw.Reddit(client_id=credentials.CLIENT_ID, client_secret=credentials.CLIENT_SECRET, user_agent="CS231N_REDDIT_NET")
 	for subreddit in reddits:
 		print(subreddit + "......................................................")
@@ -35,11 +41,11 @@ def download(training_size):
 				post = {}
 				post["id"] = submission.id
 				post["title"] = submission.title
-				post["subreddit"] = submission.subreddit_name_prefixed
+				post["subreddit"] = get_index_for_subreddit_name_prefixed(submission.subreddit_name_prefixed)
 				post["url"] = submission.url
 				post["score"] = str(submission.score)
 				post["path"] = path
-				model.append(post)
+				posts.append(post)
 				print(str(i) + ": " + post["url"] + " [" + post["score"] + "]")
 				req = urllib2.Request(post["url"])
 				req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 6.0; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0")
@@ -49,6 +55,10 @@ def download(training_size):
 				i += 1
 			if i == training_size:
 				break
+	model = {
+		'posts': posts,
+		'subreddit_indices_map': indices_by_prefixed_subreddit
+	}
 	with open(model_path, "w") as outfile:  
 		json.dump(model, outfile)
 
