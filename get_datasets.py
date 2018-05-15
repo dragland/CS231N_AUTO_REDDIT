@@ -14,7 +14,7 @@ import PIL
 from PIL import Image, ImageOps
 import json
 
-reddits = ["OldSchoolCool", "streetwear", "cosplay", "womensstreetwear", "malefashionadvice", "gaming", "sneakers"]
+reddits = ["art", "streetwear", "womensstreetwear", "OldSchoolCool", "cosplay", "malefashionadvice", "sneakers", "cats", "flowers", "gaming"]
 dataset_path = "datasets/"
 model_path = "model.json"
 training_size_default = 50
