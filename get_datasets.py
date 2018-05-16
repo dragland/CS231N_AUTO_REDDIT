@@ -69,7 +69,9 @@ def preprocess(training_resolution):
 		img = Image.open(dataset_path + pic).convert('RGB')
 		new = ImageOps.fit(img, size, Image.ANTIALIAS)
 		print(pic + str(new.size))
-		new.save(dataset_path + pic)
+		path = dataset_path + os.path.splitext(pic)[0] + '.jpg'
+		os.remove(dataset_path + pic) # to remove old png files, if converting
+		new.save(path, 'JPEG')
 
 def cleanup():
 	if os.path.exists(model_path):
