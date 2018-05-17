@@ -13,10 +13,14 @@ import urllib2
 import PIL
 from PIL import Image, ImageOps
 import json
+import random
 
 reddits = ["art", "streetwear", "womensstreetwear", "OldSchoolCool", "cosplay", "malefashion", "sneakers", "cats", "flowers", "gaming"]
 dataset_path = "datasets/"
 model_path = "model.json"
+train_path = "train.json"
+validation_path = "validation.json"
+test_path = "test.json"
 training_size_default = 50
 training_resolution_default = 1000
 indices_by_prefixed_subreddit = {}
@@ -79,11 +83,38 @@ def preprocess(training_resolution):
 		new.save(path, 'JPEG')
 
 def cleanup():
+	print("cleaning up training data...")
 	if os.path.exists(model_path):
 		os.remove(model_path)
-	print("cleaning up training data...")
 	for pic in os.listdir(dataset_path):
 		os.remove(dataset_path + pic)	
+
+def split():
+	print("splitting up training data for validation...")
+	with open(model_path) as f:
+		model = json.load(f)
+		posts = model["posts"]
+		key = model["subreddit_indices_map"]
+		length = len(posts)
+		random.shuffle(posts)
+		train = {
+			'posts': posts[:int(length * .8)],
+			'subreddit_indices_map': key
+		}
+		validate = {
+			'posts': posts[int(length * .8): int(length * .9)],
+			'subreddit_indices_map': key
+		}
+		test = {
+			'posts': posts[int(length * .9):],
+			'subreddit_indices_map': key
+		}
+		with open(train_path, "w") as outfile:
+			json.dump(train, outfile)
+		with open(validation_path, "w") as outfile:
+			json.dump(validate, outfile)
+		with open(test_path, "w") as outfile:
+			json.dump(test, outfile)
 
 #************************************ MAIN *************************************
 if __name__ == "__main__":
@@ -92,6 +123,7 @@ if __name__ == "__main__":
 	parser.add_argument("-c", action="store_true", help="cleanup training directory")
 	parser.add_argument("-d", type=int, help="number of training examples per class")
 	parser.add_argument("-p", type=int, help="preprocessing resolution of training example")
+	parser.add_argument("-s", action="store_true", help="split training data for validation")
 	args = parser.parse_args()
 	if len(sys.argv) <= 1:
 		download(training_size_default)
@@ -103,3 +135,5 @@ if __name__ == "__main__":
 			download(args.d)
 		if args.p:
 			preprocess(args.p)
+		if args.s:
+			split()
