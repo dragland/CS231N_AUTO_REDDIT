@@ -86,6 +86,12 @@ def cleanup():
 	print("cleaning up training data...")
 	if os.path.exists(model_path):
 		os.remove(model_path)
+	if os.path.exists(train_path):
+		os.remove(train_path)
+	if os.path.exists(validation_path):
+		os.remove(validation_path)
+	if os.path.exists(test_path):
+		os.remove(test_path)
 	for pic in os.listdir(dataset_path):
 		os.remove(dataset_path + pic)	
 
