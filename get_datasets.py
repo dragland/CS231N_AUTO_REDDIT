@@ -107,14 +107,17 @@ def split():
 			'posts': posts[:int(length * .8)],
 			'subreddit_indices_map': key
 		}
+		print("training size: " + str(len(train["posts"])))
 		validate = {
 			'posts': posts[int(length * .8): int(length * .9)],
 			'subreddit_indices_map': key
 		}
+		print("validation size: " + str(len(validate["posts"])))
 		test = {
 			'posts': posts[int(length * .9):],
 			'subreddit_indices_map': key
 		}
+		print("test size: " + str(len(test["posts"])))
 		with open(train_path, "w") as outfile:
 			json.dump(train, outfile)
 		with open(validation_path, "w") as outfile:
@@ -134,6 +137,7 @@ if __name__ == "__main__":
 	if len(sys.argv) <= 1:
 		download(training_size_default)
 		preprocess(training_resolution_default)
+		split()
 	else:
 		if args.c:
 			cleanup()
