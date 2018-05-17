@@ -14,7 +14,7 @@ import PIL
 from PIL import Image, ImageOps
 import json
 
-reddits = ["art", "streetwear", "womensstreetwear", "OldSchoolCool", "cosplay", "malefashionadvice", "sneakers", "cats", "flowers", "gaming"]
+reddits = ["art", "streetwear", "womensstreetwear", "OldSchoolCool", "cosplay", "malefashion", "sneakers", "cats", "flowers", "gaming"]
 dataset_path = "datasets/"
 model_path = "model.json"
 training_size_default = 50
@@ -50,10 +50,12 @@ def download(training_size):
 				req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 6.0; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0")
 				try:
 					f = urllib2.urlopen(req)
-					with open(post["path"], "wb") as output:
-					  output.write(f.read())
-					posts.append(post)
-					i += 1
+					urltype = f.geturl().split(".")[-1]
+					if urltype == "jpg" or urltype == "png" or urltype == "JPG" or urltype == "PNG":
+						with open(post["path"], "wb") as output:
+						  output.write(f.read())
+						posts.append(post)
+						i += 1
 				except urllib2.URLError, e:
 				    print("URLError = " + str(e.reason))
 			if i == training_size:
@@ -73,7 +75,7 @@ def preprocess(training_resolution):
 		new = ImageOps.fit(img, size, Image.ANTIALIAS)
 		print(pic + str(new.size))
 		path = dataset_path + os.path.splitext(pic)[0] + '.jpg'
-		os.remove(dataset_path + pic) # to remove old png files, if converting
+		os.remove(dataset_path + pic)
 		new.save(path, 'JPEG')
 
 def cleanup():
