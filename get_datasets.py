@@ -34,25 +34,28 @@ def download(training_size):
 	for subreddit in reddits:
 		print(subreddit + "......................................................")
 		i = 0
-		for submission in reddit.subreddit(subreddit).top("all"):
+		for submission in reddit.subreddit(subreddit).top("all", limit=None):
 			filetype = submission.url.split(".")[-1]
 			if filetype == "jpg" or filetype == "png" or filetype == "JPG" or filetype == "PNG":
-				path = dataset_path + subreddit + str(i) + "." + filetype
 				post = {}
 				post["id"] = submission.id
 				post["title"] = submission.title
 				post["subreddit"] = get_index_for_subreddit_name_prefixed(submission.subreddit_name_prefixed)
 				post["url"] = submission.url
 				post["score"] = str(submission.score)
-				post["path"] = path
-				posts.append(post)
+				post["path"] = dataset_path + subreddit + str(i) + "." + filetype
+				
 				print(str(i) + ": " + post["url"] + " [" + post["score"] + "]")
 				req = urllib2.Request(post["url"])
 				req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 6.0; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0")
-				f = urllib2.urlopen(req)
-				with open(path, "wb") as output:
-				  output.write(f.read())
-				i += 1
+				try:
+					f = urllib2.urlopen(req)
+					with open(post["path"], "wb") as output:
+					  output.write(f.read())
+					posts.append(post)
+					i += 1
+				except urllib2.URLError, e:
+				    print("URLError = " + str(e.reason))
 			if i == training_size:
 				break
 	model = {
