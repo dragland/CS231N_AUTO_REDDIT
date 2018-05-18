@@ -15,7 +15,16 @@ from PIL import Image, ImageOps
 import json
 import random
 
-reddits = ["art", "streetwear", "womensstreetwear", "OldSchoolCool", "cosplay", "malefashion", "sneakers", "cats", "flowers", "gaming"]
+reddits = ["art", "streetwear",
+		   "womensstreetwear", "OldSchoolCool",
+		   "cosplay", "malefashion",
+		   "sneakers", "cats",
+		   "flowers", "gaming",
+		   "AccidentalRenaissance", "AccidentalWesAnderson",
+		   "ExpectationVsReality", "PerfectTiming",
+		   "woahdude", "CrappyDesign",
+		   "CozyPlaces", "comics",
+		   "natureisfuckinglit", 'aww']
 dataset_path = "datasets/"
 model_path = "model.json"
 train_path = "train.json"
