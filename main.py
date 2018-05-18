@@ -47,6 +47,13 @@ def get_subreddit_indices_map(path):
         data = json.load(f)
         return data['subreddit_indices_map']
 
+def get_subreddit_for_index(index):
+    subreddit_indices_map = get_subreddit_indices_map('train.json')
+    reverse_map = {}
+    for k, v in subreddit_indices_map.items():
+        reverse_map[v] = k
+    return reverse_map[index]
+
 def create_model():
     # create the base pre-trained model
     base_model = VGG16(weights='imagenet', include_top=False)
@@ -171,6 +178,18 @@ def plot_confusion_matrix(config):
 
     plt.show()
 
+def predict(config):
+    model = create_model()
+    checkpoint_file_path = config.experiment_dir + 'best-checkpoint.hdf5'
+    model.load_weights(checkpoint_file_path)
+
+    img_path = config.img_path
+    img = np.array(Image.open(img_path))
+    label_i = np.argmax(model.predict(np.array([img])), axis=0)[0]
+    label = get_subreddit_for_index(label_i)
+
+    print('Predicting {}'.format(label))
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--experiment', type=str, help='unique experiment name')
@@ -178,6 +197,8 @@ if __name__ == '__main__':
     parser.add_argument('--mode', type=str, help='train, evaluate')
     parser.add_argument('--batch_size', type=int, help='batch size')
     parser.add_argument('--epochs', type=int, help='number of epochs to train for')
+    parser.add_argument('--img_path', type=str, help='path of img to predict')
+
     config = parser.parse_args()
 
     experiment_dir = 'experiments/{}/'.format(config.experiment)
@@ -194,6 +215,9 @@ if __name__ == '__main__':
     elif config.mode == 'plot_cm':
         print('Plotting confusion matrix')
         plot_confusion_matrix(config)
+    elif config.mode == 'predict':
+        print('Making predicting for image')
+        predict(config)
     else:
         print('Invalid mode! Aborting...')
 
