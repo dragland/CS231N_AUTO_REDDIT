@@ -85,12 +85,11 @@ def preprocess(training_resolution):
 	print("pre-processing training data...")
 	size = training_resolution, training_resolution
 	for pic in os.listdir(dataset_path):
-		img = Image.open(dataset_path + pic).convert('RGB')
+		path = dataset_path + pic
+		img = Image.open(path).convert('RGB')
 		new = ImageOps.fit(img, size, Image.ANTIALIAS)
 		print(pic + str(new.size))
-		path = dataset_path + os.path.splitext(pic)[0] + '.jpg'
-		os.remove(dataset_path + pic)
-		new.save(path, 'JPEG')
+		new.save(path)
 
 def cleanup():
 	print("cleaning up training data...")
