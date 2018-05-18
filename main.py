@@ -141,8 +141,8 @@ def plot_confusion_matrix(config):
     model.load_weights(checkpoint_file_path)
 
     X_train, y_train = get_data('train.json')
-    X_train = X_train[:1000]
-    y_train = np.argmax(y_train[:1000], axis=1)
+    X_train = X_train
+    y_train = np.argmax(y_train, axis=1)
     preds = np.argmax(model.predict(X_train), axis=1)
 
     indices_map = get_subreddit_indices_map('train.json')
