@@ -48,6 +48,7 @@ def download(training_size):
 				post["url"] = submission.url
 				post["score"] = str(submission.score)
 				post["path"] = dataset_path + subreddit + str(i) + "." + filetype
+				post["created"] = submission.created
 				
 				print(str(i) + ": " + post["url"] + " [" + post["score"] + "]")
 				req = urllib2.Request(post["url"])
