@@ -70,7 +70,7 @@ def download(training_size):
 						  output.write(f.read())
 						posts.append(post)
 						i += 1
-				except urllib2.URLError, e:
+				except Exception as e:
 				    print("URLError = " + str(e.reason))
 			if i == training_size:
 				break
