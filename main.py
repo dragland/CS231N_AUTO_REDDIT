@@ -1,5 +1,6 @@
 import argparse
 import os
+from itertools import product
 
 import json
 
@@ -15,6 +16,9 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.optimizers import Adam
 from keras import metrics
 from keras.callbacks import TensorBoard, ModelCheckpoint, Callback
+
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
 
 NUM_CLASSES=20
 
@@ -37,6 +41,11 @@ def get_data(json_path):
     y_train = np.array(y_train)
 
     return X_train, y_train
+
+def get_subreddit_indices_map(path):
+    with open(path) as f:
+        data = json.load(f)
+        return data['subreddit_indices_map']
 
 def create_model():
     # create the base pre-trained model
@@ -126,6 +135,42 @@ def evaluate(config):
             print('-' * 50)
         print('num correct: ', num_correct, ' total: ', len(data['posts']))
 
+def plot_confusion_matrix(config):
+    model = create_model()
+    checkpoint_file_path = config.experiment_dir + 'best-checkpoint.hdf5'
+    model.load_weights(checkpoint_file_path)
+
+    X_train, y_train = get_data('train.json')
+    X_train = X_train[:1000]
+    y_train = np.argmax(y_train[:1000], axis=1)
+    preds = np.argmax(model.predict(X_train), axis=1)
+
+    indices_map = get_subreddit_indices_map('train.json')
+    classes = sorted(indices_map.keys(), key=lambda k: indices_map[k])
+
+    cm = confusion_matrix(y_train, preds)
+
+    plt.figure()
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.title('Confusion Matrix')
+    plt.colorbar()
+
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=90)
+    plt.yticks(tick_marks, classes)
+
+    thresh = cm.max() / 2.
+    for i, j in product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], 'd'),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+
+    plt.show()
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--experiment', type=str, help='unique experiment name')
@@ -146,6 +191,9 @@ if __name__ == '__main__':
     elif config.mode == 'evaluate':
         print('Evaluating...')
         evaluate(config)
+    elif config.mode == 'plot_cm':
+        print('Plotting confusion matrix')
+        plot_confusion_matrix(config)
     else:
         print('Invalid mode! Aborting...')
 
