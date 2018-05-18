@@ -4,3 +4,7 @@ model.json
 train.json
 validation.json
 test.json
+experiments/
+bin/
+lib/
+include/
