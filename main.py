@@ -120,27 +120,13 @@ def evaluate(config):
     checkpoint_file_path = config.experiment_dir + 'best-checkpoint.hdf5'
     model.load_weights(checkpoint_file_path)
 
-    X_train, y_train = get_train_data()
-    preds = model.predict(X_train)
+    # optimizer doesn't matter
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-    with open('model.json') as f:
-        data = json.load(f)
-        subreddit_indices_map = data['subreddit_indices_map']
-        reverse_map = {}
-        for k, v in subreddit_indices_map.items():
-            reverse_map[v] = k
-        num_correct = 0
-        for i, post in enumerate(data['posts']):
-            probs = preds[i]
-            prediction_i = np.argmax(probs)
-            subreddit = reverse_map[prediction_i]
-            if prediction_i == post['subreddit']:
-                num_correct += 1
-            print(post)
-            print(probs)
-            print(subreddit)
-            print('-' * 50)
-        print('num correct: ', num_correct, ' total: ', len(data['posts']))
+    X_val, y_val = get_data('validation.json')
+    _, acc = model.evaluate(X_val, y_val)
+
+    print('Validation accuracy: {}'.format(acc))
 
 def plot_confusion_matrix(config):
     model = create_model()
