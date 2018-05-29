@@ -8,3 +8,4 @@ experiments/
 bin/
 lib/
 include/
+glove.6B*
