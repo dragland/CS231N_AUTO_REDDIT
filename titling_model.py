@@ -29,8 +29,8 @@ def create_titling_model(embedding_matrix, num_subreddits=20, max_len=20):
                                 trainable=False)
         embeddings = embedding_layer(titles)
 
-        hidden_size = 1000
-        lstm = LSTM(1000, return_sequences=True)
+        hidden_size = 256
+        lstm = LSTM(hidden_size, return_sequences=True)
         features_concat = Reshape((1, -1))(features_concat)
         _ = lstm(features_concat)
         hidden_states = lstm(embeddings)
