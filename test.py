@@ -15,15 +15,15 @@ UNKNOWN_TOKEN = '<UNK>'
 END_TOKEN = '<END>'
 
 embedding_matrix, words_by_id, id_by_words = vocab.load_embedding_matrix()
-data_generator = ImageTitlingDataGenerator('train.json', id_by_words, max_len=100, num_subreddits=NUM_SUBREDDITS, batch_size=32)
+data_generator = ImageTitlingDataGenerator('train.json', id_by_words, max_len=30, num_subreddits=NUM_SUBREDDITS, batch_size=8)
 
 print('done loading data!')
 print('creating model')
 
-model = create_titling_model(embedding_matrix, num_subreddits=20, max_len=100)
+model = create_titling_model(embedding_matrix, num_subreddits=20, max_len=30)
 model.compile(optimizer=Adam(lr=3e-4), loss='categorical_crossentropy', metrics=['accuracy'])
 
 print('done model')
 print('fitting!')
 
-model.fit_generator(data_generator, epochs=10, verbose=2)
+model.fit_generator(data_generator, epochs=10, max_queue_size=1, verbose=2)
