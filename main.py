@@ -89,16 +89,15 @@ def train(config):
         model = load_model(latest_checkpoint_path)
         with open(epoch_path) as f:
             initial_epoch = json.load(f)['epoch'] + 1
-            print('Loading model from last checkpoint and resuming training on epoch {}'.format(initial_epoch))
+            print('Loading model from last checkpoint and resuming training on epoch {}'.format(initial_epoch + 1))
     else:
         print('Starting new training run')
         model = create_model()
+        model.compile(optimizer=Adam(lr=config.lr), loss='categorical_crossentropy', metrics=['accuracy'])
 
     # record what params we trained with
     with open(config.experiment_dir + 'config.json', 'w') as f:
         json.dump(vars(config), f)
-
-    model.compile(optimizer=Adam(lr=config.lr), loss='categorical_crossentropy', metrics=['accuracy'])
 
     X_train, y_train = get_data('train.json')
     X_val, y_val = get_data('validation.json')
