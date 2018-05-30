@@ -67,11 +67,12 @@ def model_input_output_from_post(post, ids_by_word, max_len):
     subreddit_one_hot[subreddit] = 1
 
     title = post['title']
-    title = '{} {} {}'.format(START_TOKEN, title, END_TOKEN)
-    title_indices = []
-    y = []
+    title_indices = [ids_by_word[START_TOKEN]]
+    start_token_one_hot = np.zeros(len(ids_by_word))
+    start_token_one_hot[ids_by_word[START_TOKEN]] = 1
+    y = [start_token_one_hot]
 
-    for word in text_to_word_sequence(title):
+    for word in text_to_word_sequence(title)[:max_len - 1]: # for start/end tokens on each end
         if word in ids_by_word:
             word_id = ids_by_word[word]
         else:
@@ -83,6 +84,16 @@ def model_input_output_from_post(post, ids_by_word, max_len):
         target[word_id] = 1
         y.append(target)
 
+    title_indices.append(ids_by_word[END_TOKEN])
+    end_token_one_hot = np.zeros(len(ids_by_word))
+    end_token_one_hot[ids_by_word[END_TOKEN]] = 1
+    y.append(end_token_one_hot)
+
+    # inputs and outputs are one offset from each other
+    y = y[1:]
+    title_indices = title_indices[:-1]
+
+    # pad
     for _ in range(max_len - len(title_indices)):
         title_indices.append(ids_by_word[PAD_TOKEN])
         y.append(np.zeros(len(ids_by_word)))

@@ -21,12 +21,6 @@ def load_embedding_matrix():
     embedding_matrix = np.zeros((num_words, embedding_size))
     words_by_id = {}
     ids_by_word = {}
-    start_i = len(SPECIAL_TOKENS)
-    for i, (word, embedding) in enumerate(embeddings_index.items()):
-        word_id = start_i = i
-        words_by_id[word_id] = word
-        ids_by_word[word] = word_id
-        embedding_matrix[word_id] = embedding
 
     # give special tokens a random word vector
     for i, token in enumerate(SPECIAL_TOKENS):
@@ -34,5 +28,12 @@ def load_embedding_matrix():
         words_by_id[word_id] = token
         ids_by_word[token] = word_id
         embedding_matrix[i] = np.random.randn(embedding_size)
+
+    start_i = len(SPECIAL_TOKENS)
+    for i, (word, embedding) in enumerate(embeddings_index.items()):
+        word_id = start_i + i
+        words_by_id[word_id] = word
+        ids_by_word[word] = word_id
+        embedding_matrix[word_id] = embedding
 
     return embedding_matrix, words_by_id, ids_by_word
