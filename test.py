@@ -20,10 +20,14 @@ data_generator = ImageTitlingDataGenerator('train.json', id_by_words, max_len=30
 print('done loading data!')
 print('creating model')
 
-model = create_titling_model(embedding_matrix, num_subreddits=20, max_len=30)
-model.compile(optimizer=Adam(lr=3e-4), loss='categorical_crossentropy', metrics=['accuracy'])
+model = ImageTitlingModel(embedding_matrix, words_by_id, id_by_words, num_subreddits=20, max_len=30)
+model.train_model.compile(optimizer=Adam(lr=3e-4), loss='categorical_crossentropy', metrics=['accuracy'])
 
 print('done model')
 print('fitting!')
 
-model.fit_generator(data_generator, epochs=10, max_queue_size=1, verbose=2)
+model.train_model.fit_generator(data_generator, epochs=10, max_queue_size=1, verbose=2)
+# img = np.array(Image.open('datasets/AccidentalRenaissance0.jpg'))
+# subreddit = 0
+# title = model.generate_title(img, subreddit)
+print(title)

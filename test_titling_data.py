@@ -14,7 +14,7 @@ with open('train.json') as f:
     data = json.load(f)
     posts = data['posts']
     for post in posts[:5]:
-        X_img, X_subreddit, X_title_indices, y = model_input_output_from_post(post, id_by_words, 5)
+        X_img, X_subreddit, X_title_indices, y = model_input_output_from_post(post, id_by_words, 15)
         print('Post title: ', post['title'])
 
         sequence = []
