@@ -101,7 +101,7 @@ if __name__ == '__main__':
 
     config = parser.parse_args()
 
-    experiment_dir = 'experiments/{}/'.format(config.experiment)
+    experiment_dir = 'experiments/titling/{}/'.format(config.experiment)
     config.experiment_dir = experiment_dir
     if not os.path.isdir(experiment_dir):
         os.makedirs(experiment_dir)
