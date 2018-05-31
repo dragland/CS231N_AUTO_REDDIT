@@ -72,8 +72,8 @@ def sample_inference(config):
     max_len = 30
     embedding_matrix, words_by_id, id_by_words = vocab.load_embedding_matrix()
     model = ImageTitlingModel(embedding_matrix, words_by_id, id_by_words, num_subreddits=NUM_SUBREDDITS, max_len=max_len)
-    #checkpoint_file_path = config.experiment_dir + 'best-checkpoint.hdf5'
-    #model.load_weights(checkpoint_file_path)
+    checkpoint_file_path = config.experiment_dir + 'best-checkpoint.hdf5'
+    model.load_weights(checkpoint_file_path)
 
     with open('train.json') as f:
         data = json.load(f)
