@@ -17,7 +17,7 @@ class ImageTitlingDataGenerator(keras.utils.Sequence):
     def __init__(self, json_path, ids_by_word, max_len, num_subreddits, batch_size=32):
         with open(json_path) as f:
             data = json.load(f)
-            self.posts = data['posts'][:500]
+            self.posts = data['posts']
 
         self.batch_size = batch_size
         self.num_subreddits = num_subreddits
