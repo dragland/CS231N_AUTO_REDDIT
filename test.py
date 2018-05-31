@@ -14,7 +14,7 @@ PAD_TOKEN = '<PAD>'
 UNKNOWN_TOKEN = '<UNK>'
 END_TOKEN = '<END>'
 
-embedding_matrix, words_by_id, id_by_words = vocab.load_embedding_matrix()
+embedding_matrix, words_by_id, id_by_words = vocab.load_limited_embedding_matrix('train.json')
 data_generator = ImageTitlingDataGenerator('train.json', id_by_words, max_len=30, num_subreddits=NUM_SUBREDDITS, batch_size=8)
 
 print('done loading data!')

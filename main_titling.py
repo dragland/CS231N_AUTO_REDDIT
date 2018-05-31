@@ -29,7 +29,8 @@ def train(config):
         json.dump(vars(config), f)
 
     max_len = 30
-    embedding_matrix, words_by_id, id_by_words = vocab.load_embedding_matrix()
+    #embedding_matrix, words_by_id, id_by_words = vocab.load_embedding_matrix()
+    embedding_matrix, words_by_id, id_by_words = vocab.load_limited_embedding_matrix('train.json')
 
     latest_checkpoint_path = config.experiment_dir + 'latest-checkpoint.h5'
     epoch_path = config.experiment_dir + 'last_epoch.json'
@@ -73,7 +74,7 @@ def sample_inference(config):
     embedding_matrix, words_by_id, id_by_words = vocab.load_embedding_matrix()
     model = ImageTitlingModel(embedding_matrix, words_by_id, id_by_words, num_subreddits=NUM_SUBREDDITS, max_len=max_len)
     checkpoint_file_path = config.experiment_dir + 'best-checkpoint.hdf5'
-    model.load_weights(checkpoint_file_path)
+    #model.load_weights(checkpoint_file_path)
 
     with open('train.json') as f:
         data = json.load(f)

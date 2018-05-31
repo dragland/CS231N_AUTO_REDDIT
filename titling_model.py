@@ -55,6 +55,7 @@ class ImageTitlingModel(object):
         while len(title) < self.max_len:
             probs, h, c = self.inference_decoder_model.predict([np.array([prev_word]), prev_h, prev_c])
             predicted_word_id = np.argmax(probs)
+            print('prob:', np.max(probs))
 
             if predicted_word_id == end_id:
                 break
@@ -63,6 +64,8 @@ class ImageTitlingModel(object):
             title.append(predicted_word)
 
             prev_word = self.embedding_matrix[predicted_word_id]
+            print('diff h: ', np.sum(h-prev_h))
+            print('diff c: ', np.sum(c-prev_c))
             prev_h = h
             prev_c = c
 
@@ -111,7 +114,7 @@ class ImageTitlingModel(object):
         encoder_output_reshaped = Reshape((1, -1))(encoder_output)
         train_decoder = LSTM(lstm_size, return_sequences=True, return_state=True, name=LSTM_LAYER)
         _, train_initial_h, train_initial_c = train_decoder(encoder_output_reshaped)
-        train_hidden_states, _, _ = train_decoder(train_embeddings, [train_initial_h, train_initial_c])
+        train_hidden_states, _, _ = train_decoder(train_embeddings, initial_state=[train_initial_h, train_initial_c])
         train_scores = TimeDistributed(Dense(vocab_size, name=SOFTMAX_LAYER))(train_hidden_states)
         train_probs = Activation('softmax')(train_scores)
 
