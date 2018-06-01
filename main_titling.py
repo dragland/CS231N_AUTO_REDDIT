@@ -73,21 +73,30 @@ def sample_inference(config):
     max_len = 30
     embedding_matrix, words_by_id, id_by_words = vocab.load_limited_embedding_matrix('small_train.json')
     model = ImageTitlingModel(embedding_matrix, words_by_id, id_by_words, num_subreddits=NUM_SUBREDDITS, max_len=max_len)
-    checkpoint_file_path = config.experiment_dir + 'latest-checkpoint.h5'
+    checkpoint_file_path = config.experiment_dir + 'best-checkpoint.hdf5'
     model.load_weights(checkpoint_file_path)
 
     with open('small_train.json') as f:
         data = json.load(f)
-        NUM_SAMPLES = 5
+        NUM_SAMPLES = 20
         posts = data['posts']
         indices = np.random.choice(len(posts), NUM_SAMPLES)
         for i in indices:
             post = posts[i]
-            img = np.array(Image.open(post['path']))
+            img, subreddit_one_hot, title_indices, y = model_input_output_from_post(post, id_by_words, max_len)
             subreddit = post['subreddit']
             actual_title = post['title']
             predicted_title = model.generate_title(img, subreddit)
-            print('Ground truth: ', actual_title)
+
+            gt_title = []
+            for i in range(len(y)):
+                word_id = np.argmax(y[i])
+                word = words_by_id[word_id]
+                gt_title.append(word)
+            gt_title = ' '.join(gt_title)
+            print('image: ', post['path'])
+            print('orig title:', actual_title)
+            print('Ground truth: ', gt_title)
             print('Predicted: ', predicted_title)
             print()
 
@@ -106,15 +115,6 @@ def evaluate(config):
     model.train_model.compile(optimizer=Adam(lr=config.lr), loss='categorical_crossentropy', metrics=['accuracy'])
     results = model.train_model.evaluate_generator(train_data_generator, max_queue_size=1)
     print(results)
-
-    with open('small_train.json') as f:
-        data = json.load(f)
-        NUM_SAMPLES = 5
-        posts = data['posts']
-        indices = np.random.choice(len(posts), NUM_SAMPLES)
-        for i in indices:
-            
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
