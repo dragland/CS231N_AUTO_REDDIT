@@ -20,8 +20,6 @@ def load_limited_embedding_matrix(json_path):
             words = text_to_word_sequence(post['title'])
             total_num_words += len(words)
             for w in words:
-                if w not in words_in_examples:
-                    print(w)
                 words_in_examples.add(w)
 
     print('total words:', total_num_words)

@@ -30,14 +30,14 @@ def train(config):
 
     max_len = 30
     #embedding_matrix, words_by_id, id_by_words = vocab.load_embedding_matrix()
-    embedding_matrix, words_by_id, id_by_words = vocab.load_limited_embedding_matrix('train.json')
+    embedding_matrix, words_by_id, id_by_words = vocab.load_limited_embedding_matrix('small_train.json')
 
     latest_checkpoint_path = config.experiment_dir + 'latest-checkpoint.h5'
     epoch_path = config.experiment_dir + 'last_epoch.json'
     initial_epoch = 0
     model = ImageTitlingModel(embedding_matrix, words_by_id, id_by_words, num_subreddits=NUM_SUBREDDITS, max_len=max_len)
     if os.path.exists(latest_checkpoint_path):
-        mode.load_checkpoint(latest_checkpoint_path)
+        model.load_checkpoint(latest_checkpoint_path)
         with open(epoch_path) as f:
             initial_epoch = json.load(f)['epoch'] + 1
             print('Loading model from last checkpoint and resuming training on epoch {}'.format(initial_epoch))
@@ -45,7 +45,7 @@ def train(config):
         print('Starting new training run')
         model.train_model.compile(optimizer=Adam(lr=config.lr), loss='categorical_crossentropy', metrics=['accuracy'])
 
-    train_data_generator = ImageTitlingDataGenerator('train.json',
+    train_data_generator = ImageTitlingDataGenerator('small_train.json',
         id_by_words,
         max_len=max_len,
         num_subreddits=NUM_SUBREDDITS,
@@ -71,12 +71,12 @@ def train(config):
 
 def sample_inference(config):
     max_len = 30
-    embedding_matrix, words_by_id, id_by_words = vocab.load_embedding_matrix()
+    embedding_matrix, words_by_id, id_by_words = vocab.load_limited_embedding_matrix('small_train.json')
     model = ImageTitlingModel(embedding_matrix, words_by_id, id_by_words, num_subreddits=NUM_SUBREDDITS, max_len=max_len)
-    checkpoint_file_path = config.experiment_dir + 'best-checkpoint.hdf5'
-    #model.load_weights(checkpoint_file_path)
+    checkpoint_file_path = config.experiment_dir + 'latest-checkpoint.h5'
+    model.load_weights(checkpoint_file_path)
 
-    with open('train.json') as f:
+    with open('small_train.json') as f:
         data = json.load(f)
         NUM_SAMPLES = 5
         posts = data['posts']
@@ -90,6 +90,31 @@ def sample_inference(config):
             print('Ground truth: ', actual_title)
             print('Predicted: ', predicted_title)
             print()
+
+def evaluate(config):
+    max_len = 30;
+    embedding_matrix, words_by_id, id_by_words = vocab.load_limited_embedding_matrix('small_train.json')
+    model = ImageTitlingModel(embedding_matrix, words_by_id, id_by_words, num_subreddits=NUM_SUBREDDITS, max_len=max_len)
+    checkpoint_file_path = config.experiment_dir + 'latest-checkpoint.h5'
+    model.load_weights(checkpoint_file_path)
+
+    train_data_generator = ImageTitlingDataGenerator('small_train.json',
+        id_by_words,
+        max_len=max_len,
+        num_subreddits=NUM_SUBREDDITS,
+        batch_size=8)
+    model.train_model.compile(optimizer=Adam(lr=config.lr), loss='categorical_crossentropy', metrics=['accuracy'])
+    results = model.train_model.evaluate_generator(train_data_generator, max_queue_size=1)
+    print(results)
+
+    with open('small_train.json') as f:
+        data = json.load(f)
+        NUM_SAMPLES = 5
+        posts = data['posts']
+        indices = np.random.choice(len(posts), NUM_SAMPLES)
+        for i in indices:
+            
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -110,6 +135,7 @@ if __name__ == '__main__':
     mode_handlers = {
         'train': train,
         'sample_inference': sample_inference,
+        'evaluate': evaluate
     }
 
     mode = config.mode

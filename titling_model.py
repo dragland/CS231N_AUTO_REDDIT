@@ -30,11 +30,21 @@ class ImageTitlingModel(object):
 
     def load_checkpoint(self, save_file):
         self.train_model = load_model(save_file)
-        set_inference_weights_from_train()
+        self.set_inference_weights_from_train()
+        for layer in self.train_model.layers:
+            if layer.name == 'embedding':
+                self.embedding_matrix = layer.get_weights()[0]
+                print('found embeddings weights!')
+                break
 
     def load_weights(self, save_file):
         self.train_model.load_weights(save_file)
-        set_inference_weights_from_train()
+        self.set_inference_weights_from_train()
+        for layer in self.train_model.layers:
+            if layer.name == 'embedding':
+                self.embedding_matrix = layer.get_weights()[0]
+                print('found embeddings weights!')
+                break
 
     def generate_title(self, img, subreddit):
         subreddit_one_hot = np.zeros(self.num_subreddits)
@@ -55,7 +65,6 @@ class ImageTitlingModel(object):
         while len(title) < self.max_len:
             probs, h, c = self.inference_decoder_model.predict([np.array([prev_word]), prev_h, prev_c])
             predicted_word_id = np.argmax(probs)
-            print('prob:', np.max(probs))
 
             if predicted_word_id == end_id:
                 break
@@ -64,8 +73,6 @@ class ImageTitlingModel(object):
             title.append(predicted_word)
 
             prev_word = self.embedding_matrix[predicted_word_id]
-            print('diff h: ', np.sum(h-prev_h))
-            print('diff c: ', np.sum(c-prev_c))
             prev_h = h
             prev_c = c
 
@@ -78,8 +85,13 @@ class ImageTitlingModel(object):
             inference_layers += model.layers
         train_layers_by_name = {layer.name: layer for layer in self.train_model.layers}
         for inference_layer in inference_layers:
-            train_layer = train_layers_by_name[layer.name]
-            inference_layer.weights = train_layer.weights
+            if inference_layer.name not in train_layers_by_name:
+                print('Could not find weights for layer: ', inference_layer.name)
+                print('Skipping...')
+                continue
+            print('setting weights for layer:', inference_layer.name)
+            train_layer = train_layers_by_name[inference_layer.name]
+            inference_layer.set_weights(train_layer.get_weights())
 
     def create_models(self, lstm_size, embedding_matrix, num_subreddits, max_len):
         cnn_encoder = VGG16(weights='imagenet', include_top=False)
