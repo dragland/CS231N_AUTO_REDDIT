@@ -127,7 +127,7 @@ class ImageTitlingModel(object):
         train_decoder = LSTM(lstm_size, return_sequences=True, return_state=True, name=LSTM_LAYER)
         _, train_initial_h, train_initial_c = train_decoder(encoder_output_reshaped)
         train_hidden_states, _, _ = train_decoder(train_embeddings, initial_state=[train_initial_h, train_initial_c])
-        train_scores = TimeDistributed(Dense(vocab_size, name=SOFTMAX_LAYER))(train_hidden_states)
+        train_scores = TimeDistributed(Dense(vocab_size), name=SOFTMAX_LAYER)(train_hidden_states)
         train_probs = Activation('softmax')(train_scores)
 
         self.train_model = Model(inputs=[cnn_encoder.inputs[0], one_hot_subreddit, train_titles], outputs=[train_probs])
