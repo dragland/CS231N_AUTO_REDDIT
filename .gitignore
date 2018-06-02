@@ -2,6 +2,7 @@ datasets/
 *pyc
 model.json
 train.json
+small_train.json
 validation.json
 test.json
 experiments/
