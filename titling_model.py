@@ -46,6 +46,59 @@ class ImageTitlingModel(object):
                 print('found embeddings weights!')
                 break
 
+    def generate_title_beam_search(self, img, subreddit, k):
+        subreddit_one_hot = np.zeros(self.num_subreddits)
+        subreddit_one_hot[subreddit] = 1
+        encoder_output = self.inference_encoder_model.predict([np.array([img]), np.array([subreddit_one_hot])])
+
+        zero_h = np.zeros((encoder_output.shape[0], self.lstm_size))
+        zero_c = np.zeros((encoder_output.shape[0], self.lstm_size))
+        _, initial_h, initial_c = self.inference_decoder_model.predict([encoder_output, zero_h, zero_c])
+
+        end_id = self.id_by_words[END_TOKEN]
+
+        def expand(seq, k):
+            word_ids, prev_h, prev_c, p = seq
+            prev_word_id = word_ids[-1]
+            if prev_word_id == end_id:
+                return None
+
+            prev_word = self.embedding_matrix[prev_word_id]
+            probs, h, c = self.inference_decoder_model.predict([np.array([prev_word]), prev_h, prev_c])
+            probs = probs[0]
+            top_k = np.argsort(probs)[-k:]
+            top_k_candidates = []
+            for i in top_k:
+                new_word_ids = list(word_ids)
+                new_word_ids.append(i)
+                top_k_candidates.append((new_word_ids, h, c, p * probs[i]))
+            return top_k_candidates
+
+        start_id = self.id_by_words[START_TOKEN]
+        top_k_candidates = [([start_id], initial_h, initial_c, 1)]
+        for _ in range(self.max_len):
+            possible_candidates = []
+            did_expand = False
+            for candidate in top_k_candidates:
+                expanded = expand(candidate, k)
+                if expanded is None:
+                    possible_candidates.append(candidate)
+                else:
+                    possible_candidates.extend(expanded)
+                    did_expand = True
+            if not did_expand:
+                # all the sequences must have sampled END token
+                break
+            sorted_candidates = sorted(possible_candidates, key=lambda c: c[-1])
+            top_k_candidates = sorted_candidates[-k:]
+        sorted_candidates = sorted(top_k_candidates, key=lambda c: c[-1])
+        top_candidate = sorted_candidates[-1]
+        top_title_indices = top_candidate[0]
+        title = []
+        for word_id in top_title_indices:
+            title.append(self.words_by_id[word_id])
+        return ' '.join(title)
+
     def generate_title(self, img, subreddit):
         subreddit_one_hot = np.zeros(self.num_subreddits)
         subreddit_one_hot[subreddit] = 1
@@ -140,7 +193,7 @@ class ImageTitlingModel(object):
         prev_h = Input(shape=(lstm_size,), dtype='float32', name='prev_h')
         prev_c = Input(shape=(lstm_size,), dtype='float32', name='prev_c')
 
-        inference_decoder = LSTM(lstm_size, return_sequences=True, return_state=True, name=LSTM_LAYER)
+        inference_decoder = LSTM(lstm_size, return_state=True, name=LSTM_LAYER)
         prev_word_reshaped = Reshape((1, -1))(prev_word)
         inference_h, state_h, state_c = inference_decoder(prev_word_reshaped, initial_state=[prev_h, prev_c])
         inference_scores = Dense(vocab_size, name=SOFTMAX_LAYER)(inference_h)

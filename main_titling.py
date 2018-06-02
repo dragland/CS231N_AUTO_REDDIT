@@ -76,9 +76,9 @@ def sample_inference(config):
     checkpoint_file_path = config.experiment_dir + 'best-checkpoint.hdf5'
     model.load_weights(checkpoint_file_path)
 
-    with open('small_train.json') as f:
+    with open('validation.json') as f:
         data = json.load(f)
-        NUM_SAMPLES = 20
+        NUM_SAMPLES = 10
         posts = data['posts']
         indices = np.random.choice(len(posts), NUM_SAMPLES)
         for i in indices:
@@ -86,7 +86,12 @@ def sample_inference(config):
             img, subreddit_one_hot, title_indices, y = model_input_output_from_post(post, id_by_words, max_len)
             subreddit = post['subreddit']
             actual_title = post['title']
-            predicted_title = model.generate_title(img, subreddit)
+
+            predicted_title_greedy = model.generate_title_beam_search(img, subreddit, 1)
+            predicted_title_beam = model.generate_title_beam_search(img, subreddit, 5)
+            if predicted_title_greedy == predicted_title_beam:
+                print('not interesting!')
+                continue
 
             gt_title = []
             for i in range(len(y)):
@@ -97,7 +102,8 @@ def sample_inference(config):
             print('image: ', post['path'])
             print('orig title:', actual_title)
             print('Ground truth: ', gt_title)
-            print('Predicted: ', predicted_title)
+            print('Predicted greedy: ', predicted_title_greedy)
+            print('Predicted beam: ', predicted_title_beam)
             print()
 
 def evaluate(config):
