@@ -28,9 +28,9 @@ def train(config):
     with open(config.experiment_dir + 'config.json', 'w') as f:
         json.dump(vars(config), f)
 
-    max_len = 30
+    max_len = config.max_len
     #embedding_matrix, words_by_id, id_by_words = vocab.load_embedding_matrix()
-    embedding_matrix, words_by_id, id_by_words = vocab.load_limited_embedding_matrix('small_train.json')
+    embedding_matrix, words_by_id, id_by_words = vocab.load_limited_embedding_matrix(config.train_json, config.embed_size)
 
     latest_checkpoint_path = config.experiment_dir + 'latest-checkpoint.h5'
     epoch_path = config.experiment_dir + 'last_epoch.json'
@@ -45,12 +45,12 @@ def train(config):
         print('Starting new training run')
         model.train_model.compile(optimizer=Adam(lr=config.lr), loss='categorical_crossentropy', metrics=['accuracy'])
 
-    train_data_generator = ImageTitlingDataGenerator('small_train.json',
+    train_data_generator = ImageTitlingDataGenerator(config.train_json,
         id_by_words,
         max_len=max_len,
         num_subreddits=NUM_SUBREDDITS,
         batch_size=config.batch_size)
-    validation_data_generator = ImageTitlingDataGenerator('validation.json',
+    validation_data_generator = ImageTitlingDataGenerator(config.validation_json,
         id_by_words,
         max_len=max_len,
         num_subreddits=NUM_SUBREDDITS,
@@ -70,8 +70,8 @@ def train(config):
         callbacks=[best_checkpoint, latest_checkpoint, epoch_saver, tensorboard])
 
 def sample_inference(config):
-    max_len = 30
     embedding_matrix, words_by_id, id_by_words = vocab.load_limited_embedding_matrix('small_train.json')
+    max_len = config.max_len
     model = ImageTitlingModel(embedding_matrix, words_by_id, id_by_words, num_subreddits=NUM_SUBREDDITS, max_len=max_len)
     checkpoint_file_path = config.experiment_dir + 'best-checkpoint.hdf5'
     model.load_weights(checkpoint_file_path)
@@ -107,7 +107,7 @@ def sample_inference(config):
             print()
 
 def evaluate(config):
-    max_len = 30;
+    max_len = config.max_len
     embedding_matrix, words_by_id, id_by_words = vocab.load_limited_embedding_matrix('small_train.json')
     model = ImageTitlingModel(embedding_matrix, words_by_id, id_by_words, num_subreddits=NUM_SUBREDDITS, max_len=max_len)
     checkpoint_file_path = config.experiment_dir + 'latest-checkpoint.h5'
@@ -130,6 +130,10 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, help='batch size')
     parser.add_argument('--epochs', type=int, help='number of epochs to train for')
     parser.add_argument('--img_path', type=str, help='path of img to predict')
+    parser.add_argument('--embed_size', type=int, default=300, help='size of word/image embeddings, 50 or 300')
+    parser.add_argument('--max_len', type=int, default=30, help='max len of titles')
+    parser.add_argument('--train_json', type=str, default='train.json', help='json file containing train data')
+    parser.add_argument('--validation_json', type=str, default='validation.json', help='json file containing validation data')
 
     config = parser.parse_args()
 

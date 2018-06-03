@@ -9,9 +9,7 @@ END_TOKEN = '<END>'
 # important that PAD_TOKEN have index 0
 SPECIAL_TOKENS = [PAD_TOKEN, START_TOKEN, UNKNOWN_TOKEN, END_TOKEN]
 
-def load_limited_embedding_matrix(json_path):
-    embedding_size = 50
-
+def load_limited_embedding_matrix(json_path, embedding_size):
     words_in_examples = set()
     total_num_words = 0
     with open(json_path) as f:
@@ -22,7 +20,7 @@ def load_limited_embedding_matrix(json_path):
             for w in words:
                 words_in_examples.add(w)
 
-    print('total words:', total_num_words)
+    print('total num words:', total_num_words)
     num_words = len(words_in_examples) + len(SPECIAL_TOKENS)
     embedding_matrix = np.zeros((num_words, embedding_size))
     words_by_id = {}
@@ -36,7 +34,8 @@ def load_limited_embedding_matrix(json_path):
         embedding_matrix[i] = np.random.randn(embedding_size)
 
     i = len(SPECIAL_TOKENS)
-    with open('glove.6B.50d.txt') as f:
+    glove_path = 'glove.6B.{}d.txt'.format(embedding_size)
+    with open(glove_path) as f:
         for line in f:
             word_id = i
             values = line.split()
@@ -55,8 +54,7 @@ def load_limited_embedding_matrix(json_path):
 
     embedding_matrix = embedding_matrix[:i]
 
-    print('words in examples len:', len(words_in_examples))
-    print('words in embedding_matrix:', len(embedding_matrix))
+    print('total vocab size', len(words_in_examples))
     return embedding_matrix, words_by_id, ids_by_word
 
 def load_embedding_matrix():
