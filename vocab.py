@@ -20,7 +20,11 @@ def load_limited_embedding_matrix(json_path, embedding_size):
             embedding = np.asarray(values[1:], dtype='float32')
             glove_index[word] = embedding
 
-    unique_words = set()
+    # maintain array so that ordering is consistent across runs
+    # and words get mapped to same id
+    # use set for performance reasons
+    unique_words_set = set()
+    unique_words = []
     word_counts = defaultdict(int)
     total_num_words = 0
     with open(json_path) as f:
@@ -29,7 +33,9 @@ def load_limited_embedding_matrix(json_path, embedding_size):
             words = text_to_word_sequence(post['title'])
             total_num_words += len(words)
             for w in words:
-                unique_words.add(w)
+                if w not in unique_words_set:
+                    unique_words_set.add(w)
+                    unique_words.append(w)
                 word_counts[w] += 1
 
     print('total num words:', total_num_words)
