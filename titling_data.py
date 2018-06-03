@@ -6,6 +6,7 @@ import keras
 import json
 from keras.preprocessing.text import text_to_word_sequence
 from keras.preprocessing.sequence import pad_sequences
+from keras.applications.vgg16 import preprocess_input
 
 NUM_SUBREDDITS = 20
 START_TOKEN = '<START>'
@@ -17,7 +18,7 @@ class ImageTitlingDataGenerator(keras.utils.Sequence):
     def __init__(self, json_path, ids_by_word, max_len, num_subreddits, batch_size=32):
         with open(json_path) as f:
             data = json.load(f)
-            self.posts = data['posts']
+            self.posts = data['posts'][:100]
 
         self.batch_size = batch_size
         self.num_subreddits = num_subreddits
@@ -61,9 +62,10 @@ class ImageTitlingDataGenerator(keras.utils.Sequence):
 def model_input_output_from_post(post, ids_by_word, max_len):
     path = post['path']
     subreddit = post['subreddit']
-    img = np.array(Image.open(path))
+    img = np.array(Image.open(path), dtype=np.float64)
+    img = preprocess_input(img)
 
-    subreddit_one_hot = np.zeros(NUM_SUBREDDITS, dtype=np.float32)
+    subreddit_one_hot = np.zeros(NUM_SUBREDDITS, dtype=np.float64)
     subreddit_one_hot[subreddit] = 1
 
     title = post['title']
