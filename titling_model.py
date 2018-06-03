@@ -78,15 +78,15 @@ class ImageTitlingModel(object):
         top_k_candidates = [([start_id], initial_h, initial_c, 1)]
         for _ in range(self.max_len):
             possible_candidates = []
-            did_expand = False
+            expanded_at_least_one = False
             for candidate in top_k_candidates:
                 expanded = expand(candidate, k)
                 if expanded is None:
                     possible_candidates.append(candidate)
                 else:
                     possible_candidates.extend(expanded)
-                    did_expand = True
-            if not did_expand:
+                    expanded_at_least_one = True
+            if not expanded_at_least_one:
                 # all the sequences must have sampled END token
                 break
             sorted_candidates = sorted(possible_candidates, key=lambda c: c[-1])
