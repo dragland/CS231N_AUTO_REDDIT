@@ -1,6 +1,7 @@
 import numpy as np
 from keras.preprocessing.text import text_to_word_sequence
 import json
+from collections import defaultdict
 
 START_TOKEN = '<START>'
 PAD_TOKEN = '<PAD>'
@@ -10,7 +11,17 @@ END_TOKEN = '<END>'
 SPECIAL_TOKENS = [PAD_TOKEN, START_TOKEN, UNKNOWN_TOKEN, END_TOKEN]
 
 def load_limited_embedding_matrix(json_path, embedding_size):
-    words_in_examples = set()
+    glove_path = 'glove.6B.{}d.txt'.format(embedding_size)
+    glove_index = {}
+    with open(glove_path) as f:
+        for line in f:
+            values = line.split()
+            word = values[0]
+            embedding = np.asarray(values[1:], dtype='float32')
+            glove_index[word] = embedding
+
+    unique_words = set()
+    word_counts = defaultdict(int)
     total_num_words = 0
     with open(json_path) as f:
         data = json.load(f)
@@ -18,43 +29,41 @@ def load_limited_embedding_matrix(json_path, embedding_size):
             words = text_to_word_sequence(post['title'])
             total_num_words += len(words)
             for w in words:
-                words_in_examples.add(w)
+                unique_words.add(w)
+                word_counts[w] += 1
 
     print('total num words:', total_num_words)
-    num_words = len(words_in_examples) + len(SPECIAL_TOKENS)
+    num_words = len(unique_words) + len(SPECIAL_TOKENS)
     embedding_matrix = np.zeros((num_words, embedding_size))
     words_by_id = {}
     ids_by_word = {}
 
     # give special tokens a random word vector
-    for i, token in enumerate(SPECIAL_TOKENS):
-        word_id = i
-        words_by_id[word_id] = token
-        ids_by_word[token] = word_id
-        embedding_matrix[i] = np.random.randn(embedding_size)
+    next_word_id = 0
+    for token in SPECIAL_TOKENS:
+        words_by_id[next_word_id] = token
+        ids_by_word[token] = next_word_id
+        embedding_matrix[next_word_id] = np.random.randn(embedding_size)
+        next_word_id += 1
 
-    i = len(SPECIAL_TOKENS)
-    glove_path = 'glove.6B.{}d.txt'.format(embedding_size)
-    with open(glove_path) as f:
-        for line in f:
-            word_id = i
-            values = line.split()
-            word = values[0]
+    for word in unique_words:
+        if word in glove_index:
+            embedding = glove_index[word]
+        elif word_counts[word] >= 20:
+            embedding = np.random.randn(embedding_size)
+        else:
+            # skip it, let it map to unknown token
+            continue
 
-            if word not in words_in_examples:
-                continue
+        words_by_id[next_word_id] = word
+        ids_by_word[word] = next_word_id
+        embedding_matrix[next_word_id] = embedding
 
-            embedding = np.asarray(values[1:], dtype='float32')
+        next_word_id += 1
 
-            words_by_id[word_id] = word
-            ids_by_word[word] = word_id
-            embedding_matrix[word_id] = embedding
+    embedding_matrix = embedding_matrix[:next_word_id]
 
-            i += 1
-
-    embedding_matrix = embedding_matrix[:i]
-
-    print('total vocab size', len(words_in_examples))
+    print('total vocab size', len(embedding_matrix))
     return embedding_matrix, words_by_id, ids_by_word
 
 def load_embedding_matrix():
