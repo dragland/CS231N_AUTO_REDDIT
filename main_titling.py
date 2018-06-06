@@ -30,12 +30,13 @@ def train(config):
 
     max_len = config.max_len
     #embedding_matrix, words_by_id, id_by_words = vocab.load_embedding_matrix()
-    embedding_matrix, words_by_id, id_by_words = vocab.load_limited_embedding_matrix(config.train_json, config.embed_size)
+    #embedding_matrix, words_by_id, id_by_words = vocab.load_limited_embedding_matrix(config.train_json, config.embed_size)
+    words_by_id, id_by_words = vocab.load_vocab(config.train_json)
 
     latest_checkpoint_path = config.experiment_dir + 'latest-checkpoint.h5'
     epoch_path = config.experiment_dir + 'last_epoch.json'
     initial_epoch = 0
-    model = ImageTitlingModel(embedding_matrix, words_by_id, id_by_words, num_subreddits=NUM_SUBREDDITS, max_len=max_len)
+    model = ImageTitlingModel(words_by_id, id_by_words, num_subreddits=NUM_SUBREDDITS, max_len=max_len)
     if os.path.exists(latest_checkpoint_path):
         model.load_checkpoint(latest_checkpoint_path)
         with open(epoch_path) as f:
