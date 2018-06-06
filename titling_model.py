@@ -17,16 +17,16 @@ UNKNOWN_TOKEN = '<UNK>'
 END_TOKEN = '<END>'
 
 class ImageTitlingModel(object):
-    def __init__(self, embedding_matrix, words_by_id, id_by_words, num_subreddits=20, max_len=20):
+    def __init__(self, words_by_id, id_by_words, num_subreddits=20, max_len=20):
         self.num_subreddits = num_subreddits
         self.max_len = max_len
-        self.embedding_matrix = embedding_matrix
         self.words_by_id = words_by_id
         self.id_by_words = id_by_words
 
-        self.lstm_size = 256
+        self.embedding_size = 512
+        self.lstm_size = 512
 
-        self.create_models(self.lstm_size, embedding_matrix, num_subreddits, max_len)
+        self.create_models(self.lstm_size, self.embedding_size, num_subreddits, max_len)
 
     def load_checkpoint(self, save_file):
         self.train_model = load_model(save_file)
@@ -146,20 +146,20 @@ class ImageTitlingModel(object):
             train_layer = train_layers_by_name[inference_layer.name]
             inference_layer.set_weights(train_layer.get_weights())
 
-    def create_models(self, lstm_size, embedding_matrix, num_subreddits, max_len):
+    def create_models(self, lstm_size, embedding_size, num_subreddits, max_len):
         cnn_encoder = VGG16(weights='imagenet', include_top=False)
         for layer in cnn_encoder.layers:
             layer.trainable = False
 
-        vocab_size = embedding_matrix.shape[0]
-        word_embeddings_size = embedding_matrix.shape[1]
+        print('cnn_encoder input:', cnn_encoder.inputs)
+        vocab_size = len(self.words_by_id)
 
         one_hot_subreddit = Input(shape=(num_subreddits,), dtype='float32', name='subreddit_input')
         features = cnn_encoder.output
         features = GlobalAveragePooling2D()(features)
         features_concat = Concatenate()([features, one_hot_subreddit])
 
-        encoder_output = Dense(word_embeddings_size, name=PROJECTION_LAYER)(features_concat)
+        encoder_output = Dense(embedding_size, name=PROJECTION_LAYER)(features_concat)
 
         # decoding changes between training and testing
         # during training, we feed the ground truth prev word into the LSTM
@@ -168,11 +168,9 @@ class ImageTitlingModel(object):
         # training model
         train_titles = Input(shape=(max_len,), dtype='int32', name='train_titles_input')
         train_embedding_layer = Embedding(vocab_size,
-            word_embeddings_size,
-            weights=[embedding_matrix],
+            embedding_size,
             input_length=max_len,
             mask_zero=True,
-            trainable=False,
             name=EMBEDDING_LAYER)
         train_embeddings = train_embedding_layer(train_titles)
 
@@ -186,10 +184,10 @@ class ImageTitlingModel(object):
         self.train_model = Model(inputs=[cnn_encoder.inputs[0], one_hot_subreddit, train_titles], outputs=[train_probs])
 
         # inference encoder
-        self.inference_encoder_model = Model(inputs=[cnn_encoder.inputs[0], one_hot_subreddit], outputs=encoder_output)
+        self.inference_encoder_model = Model(inputs=[cnn_encoder.inputs[0], one_hot_subreddit], outputs=[encoder_output])
 
         # inference decoder for words
-        prev_word = Input(shape=(word_embeddings_size,), dtype='float32', name='prev_word')
+        prev_word = Input(shape=(embedding_size,), dtype='float32', name='prev_word')
         prev_h = Input(shape=(lstm_size,), dtype='float32', name='prev_h')
         prev_c = Input(shape=(lstm_size,), dtype='float32', name='prev_c')
 

@@ -10,6 +10,35 @@ END_TOKEN = '<END>'
 # important that PAD_TOKEN have index 0
 SPECIAL_TOKENS = [PAD_TOKEN, START_TOKEN, UNKNOWN_TOKEN, END_TOKEN]
 
+def load_vocab(json_path):
+    # maintain array so that ordering is consistent across runs
+    # and words get mapped to same id
+    # use set for performance reasons
+    word_counts = defaultdict(int)
+    with open(json_path) as f:
+        data = json.load(f)
+        for post in data['posts']:
+            words = text_to_word_sequence(post['title'])
+            for w in words:
+                word_counts[w] += 1
+
+    words_by_id = {}
+    ids_by_word = {}
+
+    i = 0
+    for token in SPECIAL_TOKENS:
+        words_by_id[i] = token
+        ids_by_word[token] = i
+        i += 1
+
+    for word, count in word_counts.items():
+        if count >= 5:
+            words_by_id[i] = word
+            ids_by_word[word] = i
+            i += 1
+
+    return words_by_id, ids_by_word
+
 def load_limited_embedding_matrix(json_path, embedding_size):
     glove_path = 'glove.6B.{}d.txt'.format(embedding_size)
     glove_index = {}
