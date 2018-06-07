@@ -85,7 +85,7 @@ def create_model(size):
     model.add(vgg_conv)
     model.add(layers.Flatten())
     model.add(layers.Dense(1024, activation='relu'))
-    model.add(layers.Dropout(0.5))
+    model.add(layers.Dropout(0.25))
     model.add(layers.Dense(NUM_CLASSES, activation='softmax'))
     model.summary()
     #plot_model(model, to_file=config.path + model_output, show_shapes=True, show_layer_names=True)
