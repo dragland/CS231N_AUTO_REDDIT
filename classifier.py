@@ -19,7 +19,7 @@ from keras import models
 from keras import layers
 from keras import optimizers
 from keras.utils.vis_utils import plot_model
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 from sklearn.metrics import confusion_matrix
 from vis.visualization import visualize_saliency
 plt.switch_backend('agg')
@@ -172,7 +172,8 @@ def train(config):
     model = create_model(X_train.shape[1])
     model.compile(loss='categorical_crossentropy', optimizer=optimizers.Adam(lr=config.l), metrics=['accuracy'])
     checkpoint = ModelCheckpoint(config.path + best_weights, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
-    history = model.fit(X_train, y_train, validation_data=(X_val, y_val), batch_size=32, epochs=config.n, callbacks=[checkpoint], verbose=1)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=2)
+    history = model.fit(X_train, y_train, validation_data=(X_val, y_val), batch_size=32, epochs=config.n, callbacks=[checkpoint, early_stopping], verbose=1)
     with open(config.path + model_history, 'wb') as f:
         pickle.dump(history.history, f)
     
