@@ -5,6 +5,7 @@
 
 #*********************************** SETUP *************************************
 import sys
+import os
 import argparse
 import json
 import pickle
@@ -24,18 +25,24 @@ from vis.visualization import visualize_saliency
 plt.switch_backend('agg')
 
 NUM_CLASSES=20
-validation_path = "validation.json"
-model_history = "experiments/test.h5"
-best_weights = "experiments/best.h5"
 train_path_default = "train.json"
 train_small_path_default = "small_train.json"
-model_output = "experiments/model_graph.png"
-acc_output = "experiments/acc.png"
-loss_output = "experiments/loss.png"
-saliency_output = "experiments/saliency.png"
-confused_output = "experiments/confused.png"
+validation_path = "validation.json"
+
+experiments_path ="experiments/"
+test_path = "test"
+config_path = "/config.json"
+model_output = "/model_graph.png"
+model_history = "/test.h5"
+best_weights = "/best.h5"
+score_output = "val_acc.txt"
+acc_output = "/acc.png"
+loss_output = "/loss.png"
+confused_output = "/confused.png"
+saliency_output = "/saliency.png"
+
 learning_rate_default = 1e-4
-epochs_default = 10
+epochs_default = 15
 
 #*********************************** HELPERS ***********************************
 def get_data(json_path):
@@ -81,7 +88,7 @@ def create_model(size):
     model.add(layers.Dropout(0.5))
     model.add(layers.Dense(NUM_CLASSES, activation='softmax'))
     model.summary()
-    #plot_model(model, to_file=model_output, show_shapes=True, show_layer_names=True)
+    #plot_model(model, to_file=config.path + model_output, show_shapes=True, show_layer_names=True)
     return model
 
 def plot_history(history):
@@ -92,7 +99,7 @@ def plot_history(history):
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
-    plt.savefig(acc_output)
+    plt.savefig(config.path + acc_output)
     # plt.show()
     plt.gcf().clear()
     plt.plot(history['loss'], 'ro', markersize=12)
@@ -101,23 +108,25 @@ def plot_history(history):
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
-    plt.savefig(loss_output)
+    plt.savefig(config.path + loss_output)
     # plt.show()
 
 def score(config):
     X_train, y_train = get_data(config.train_path)
     X_val, y_val = get_data(validation_path)
     model = create_model(X_train.shape[1])
-    model.load_weights(best_weights)
+    model.load_weights(config.path + best_weights)
     model.compile(loss='categorical_crossentropy', optimizer=optimizers.Adam(lr=config.l), metrics=['accuracy'])
     scores = model.evaluate(X_val, y_val, verbose=1)
     print("validation accuracy of " + str(100 * scores[1]) + "%...")
-
+    with open(config.path + score_output, 'a') as f:
+        f.write(str(100 * scores[1]) + "%\n")
+    
 def plot_confusion_matrix(config):
     X_train, y_train = get_data(config.train_path)
     y_train = np.argmax(y_train, axis=1)
     model = create_model(X_train.shape[1])
-    model.load_weights(best_weights)
+    model.load_weights(config.path + best_weights)
     model.compile(loss='categorical_crossentropy', optimizer=optimizers.Adam(lr=config.l), metrics=['accuracy'])
     indices_map = get_subreddit_indices_map(train_path_default)
     classes = sorted(indices_map.keys(), key=lambda k: indices_map[k])
@@ -139,13 +148,13 @@ def plot_confusion_matrix(config):
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    plt.savefig(confused_output)
+    plt.savefig(config.path + confused_output)
     # plt.show()
 
 def plot_saliency(config):
     X_train, y_train = get_data(config.train_path)
     model = create_model(X_train.shape[1])
-    model.load_weights(best_weights)
+    model.load_weights(config.path + best_weights)
     img = Image.open(config.i).convert('RGB')
     new = ImageOps.fit(img, (X_train.shape[1], X_train.shape[2]), Image.ANTIALIAS)
     # new.show()
@@ -154,7 +163,7 @@ def plot_saliency(config):
     out = visualize_saliency(model, len(model.layers) - 2, None, img, backprop_modifier=None, grad_modifier="absolute")
     out = PIL.Image.fromarray(out)
     # out.show()
-    out.save(saliency_output)
+    out.save(config.path + saliency_output)
 
 def train(config):
     print("training model...")
@@ -162,14 +171,14 @@ def train(config):
     X_val, y_val = get_data(validation_path)
     model = create_model(X_train.shape[1])
     model.compile(loss='categorical_crossentropy', optimizer=optimizers.Adam(lr=config.l), metrics=['accuracy'])
-    checkpoint = ModelCheckpoint(best_weights, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+    checkpoint = ModelCheckpoint(config.path + best_weights, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
     history = model.fit(X_train, y_train, validation_data=(X_val, y_val), batch_size=32, epochs=config.n, callbacks=[checkpoint], verbose=1)
-    with open(model_history, 'wb') as f:
+    with open(config.path + model_history, 'wb') as f:
         pickle.dump(history.history, f)
     
 def evaluate(config):
     print("evaluating model...")
-    with open(model_history, 'rb') as f:
+    with open(config.path + model_history, 'rb') as f:
         plot_history(pickle.load(f))
     score(config)
     plot_confusion_matrix(config)
@@ -178,7 +187,7 @@ def predict(config):
     print("predicting class for image...")
     X_train, y_train = get_data(config.train_path)
     model = create_model(X_train.shape[1])
-    model.load_weights(best_weights)
+    model.load_weights(config.path + best_weights)
     img = Image.open(config.i).convert('RGB')
     new = ImageOps.fit(img, (X_train.shape[1], X_train.shape[2]), Image.ANTIALIAS)
     img = np.array(new)
@@ -194,6 +203,7 @@ if __name__ == "__main__":
     print(sys.version)
     print("Executing program:")
     parser = argparse.ArgumentParser()
+    parser.add_argument("-p", type=str, help='path to save experiment')
     parser.add_argument("-s", action="store_true", help="use small training set")
     parser.add_argument("-t", action="store_true", help="train classifier")
     parser.add_argument('-l', type=float, help='learning rate')
@@ -205,10 +215,14 @@ if __name__ == "__main__":
     if len(sys.argv) <= 1:
         print('Invalid mode! Aborting...')
         print("example usage: ")
-        print("./classifier.py -t -e -i=datasets/cats50.jpg")
-        print("./classifier.py -s -t -n=5 -e -i=datasets/cats50.jpg")
+        print("./classifier.py -p=01 -t -l=1e-5 -e -i=datasets/cats50.jpg")
 
     else:
+        config.path = experiments_path + test_path
+        if config.p:
+            config.path = experiments_path + config.p
+        if not os.path.isdir(config.path):
+            os.mkdir(config.path, 0755);
         config.train_path = train_path_default
         if config.s:
             config.train_path = train_small_path_default
@@ -217,6 +231,8 @@ if __name__ == "__main__":
         if config.n == None:
             config.n = epochs_default
         print(config)
+        with open(config.path + config_path, "w") as f:  
+            json.dump(vars(config), f)
         if config.t:
             train(config)
         if config.e:
