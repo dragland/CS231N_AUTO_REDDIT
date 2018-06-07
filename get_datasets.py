@@ -32,7 +32,7 @@ train_path = "train.json"
 validation_path = "validation.json"
 test_path = "test.json"
 training_size_default = 50
-augment_size_default = 9
+augment_size_default = 4
 training_resolution_default = 1000
 indices_by_prefixed_subreddit = {}
 
