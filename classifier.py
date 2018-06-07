@@ -35,7 +35,7 @@ config_path = "/config.json"
 model_output = "/model_graph.png"
 model_history = "/test.h5"
 best_weights = "/best.h5"
-score_output = "val_acc.txt"
+score_output = "/val_acc.txt"
 acc_output = "/acc.png"
 loss_output = "/loss.png"
 confused_output = "/confused.png"
@@ -215,7 +215,7 @@ if __name__ == "__main__":
     if len(sys.argv) <= 1:
         print('Invalid mode! Aborting...')
         print("example usage: ")
-        print("./classifier.py -p=01 -t -l=1e-5 -e -i=datasets/cats50.jpg")
+        print("python classifier.py -p=01 -t -l=1e-5 -e -i=datasets/cats50.jpg")
 
     else:
         config.path = experiments_path + test_path
@@ -239,6 +239,3 @@ if __name__ == "__main__":
             evaluate(config)
         if config.i:
             predict(config)
-
-#https://raghakot.github.io/keras-vis/
-#https://www.learnopencv.com/keras-tutorial-fine-tuning-using-pre-trained-models/

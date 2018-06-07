@@ -110,8 +110,8 @@ if __name__ == "__main__":
 	if len(sys.argv) <= 1:
 	    print('Invalid mode! Aborting...')
 	    print("example usage: ")
-	    print("./baseline.py -k=5 -e")
-	    print("./baseline.py -k=5 -i=datasets/cats50.jpg")
+	    print("python baseline.py -k=5 -e")
+	    print("python baseline.py -k=5 -i=datasets/cats50.jpg")
 
 	else:
 		config.train_path = train_path_default
