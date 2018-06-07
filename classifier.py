@@ -222,7 +222,7 @@ if __name__ == "__main__":
         if config.p:
             config.path = experiments_path + config.p
         if not os.path.isdir(config.path):
-            os.mkdir(config.path, 0755);
+            os.mkdir(config.path);
         config.train_path = train_path_default
         if config.s:
             config.train_path = train_small_path_default
