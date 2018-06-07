@@ -1,5 +1,6 @@
 datasets/
 datasets_original/
+augment/
 *pyc
 model.json
 train.json

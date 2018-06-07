@@ -12,6 +12,7 @@ import praw
 import urllib2
 import PIL
 from PIL import Image, ImageOps
+from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
 import json
 import random
 
@@ -31,6 +32,7 @@ train_path = "train.json"
 validation_path = "validation.json"
 test_path = "test.json"
 training_size_default = 50
+augment_size_default = 9
 training_resolution_default = 1000
 indices_by_prefixed_subreddit = {}
 
@@ -91,6 +93,45 @@ def preprocess(training_resolution):
 		print(pic + str(new.size))
 		new.save(path)
 
+def augment():
+	print("augmenting training data...")
+	datagen = ImageDataGenerator(
+	        rotation_range=40,
+	        width_shift_range=0.2,
+	        height_shift_range=0.2,
+	        shear_range=0.2,
+	        zoom_range=0.2,
+	        horizontal_flip=True,
+	        fill_mode='nearest')
+	with open(train_path) as f:
+		model = json.load(f)
+		posts = model["posts"]
+		key = model["subreddit_indices_map"]
+		for i in range(len(posts)):
+			curr = posts[i]
+			img = load_img(curr["path"])
+			x = img_to_array(img)
+			x = x.reshape((1,) + x.shape)
+			i = 0
+			for new in datagen.flow(x, batch_size=1, save_to_dir='augment', save_prefix=curr["path"].split("/")[-1].split(".")[0], save_format='jpg'):
+				i += 1
+				if i == augment_size_default:
+					break
+			for f in os.listdir('augment'):
+				copy = curr.copy()
+				os.rename(os.path.join('augment', f), os.path.join('datasets', f))
+				copy["path"] = os.path.join('datasets', f)
+				posts.append(copy)
+			print(curr["path"])
+		random.shuffle(posts)
+		print(len(posts))
+		train = {
+			'posts': posts,
+			'subreddit_indices_map': key
+		}
+		with open(train_path, "w") as outfile:  
+			json.dump(train, outfile)
+
 def cleanup():
 	print("cleaning up training data...")
 	if os.path.exists(model_path):
@@ -141,6 +182,7 @@ if __name__ == "__main__":
 	parser.add_argument("-c", action="store_true", help="cleanup training directory")
 	parser.add_argument("-d", type=int, help="number of training examples per class")
 	parser.add_argument("-p", type=int, help="preprocessing resolution of training example")
+	parser.add_argument("-a", action="store_true", help="augment training examples")
 	parser.add_argument("-s", action="store_true", help="split training data for validation")
 	args = parser.parse_args()
 	if len(sys.argv) <= 1:
@@ -154,5 +196,7 @@ if __name__ == "__main__":
 			download(args.d)
 		if args.p:
 			preprocess(args.p)
+		if args.a:
+			augment()
 		if args.s:
 			split()
