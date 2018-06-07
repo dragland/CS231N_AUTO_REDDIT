@@ -111,7 +111,7 @@ if __name__ == "__main__":
 	    print('Invalid mode! Aborting...')
 	    print("example usage: ")
 	    print("./baseline.py -k=5 -e")
-	    print("./baseline.py -k=5 -i=example.jpg")
+	    print("./baseline.py -k=5 -i=datasets/cats50.jpg")
 
 	else:
 		config.train_path = train_path_default

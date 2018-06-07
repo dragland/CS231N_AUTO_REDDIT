@@ -23,12 +23,16 @@ from sklearn.metrics import confusion_matrix
 from vis.visualization import visualize_saliency
 
 NUM_CLASSES=20
-model_output = "model_graph.png"
 validation_path = "validation.json"
 model_history = "experiments/test.h5"
 best_weights = "experiments/best.h5"
 train_path_default = "train.json"
 train_small_path_default = "small_train.json"
+model_output = "experiments/model_graph.png"
+acc_output = "experiments/acc.png"
+loss_output = "experiments/loss.png"
+saliency_output = "experiments/saliency.png"
+confused_output = "experiments/confused.png"
 learning_rate_default = 1e-4
 epochs_default = 10
 
@@ -87,7 +91,7 @@ def plot_history(history):
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
-    plt.savefig('acc.png')
+    plt.savefig(acc_output)
     # plt.show()
     plt.gcf().clear()
     plt.plot(history['loss'], 'ro', markersize=12)
@@ -96,7 +100,7 @@ def plot_history(history):
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
-    plt.savefig('loss.png')
+    plt.savefig(loss_output)
     # plt.show()
 
 def score(config):
@@ -134,7 +138,7 @@ def plot_confusion_matrix(config):
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    plt.savefig('cm.png')
+    plt.savefig(confused_output)
     # plt.show()
 
 def plot_saliency(config):
@@ -143,13 +147,13 @@ def plot_saliency(config):
     model.load_weights(best_weights)
     img = Image.open(config.i).convert('RGB')
     new = ImageOps.fit(img, (X_train.shape[1], X_train.shape[2]), Image.ANTIALIAS)
-    new.show()
+    # new.show()
     img = np.array(new)
     model.compile(loss='categorical_crossentropy', optimizer=optimizers.Adam(lr=config.l), metrics=['accuracy'])
     out = visualize_saliency(model, len(model.layers) - 2, None, img, backprop_modifier=None, grad_modifier="absolute")
     out = PIL.Image.fromarray(out)
-    out.show()
-    out.save("saliency.png")
+    # out.show()
+    out.save(saliency_output)
 
 def train(config):
     print("training model...")
@@ -200,8 +204,8 @@ if __name__ == "__main__":
     if len(sys.argv) <= 1:
         print('Invalid mode! Aborting...')
         print("example usage: ")
-        print("./classifier.py -t -e -i=example.jpg")
-        print("./classifier.py -s -t -n=5 -e -i=example.jpg")
+        print("./classifier.py -t -e -i=datasets/cats50.jpg")
+        print("./classifier.py -s -t -n=5 -e -i=datasets/cats50.jpg")
 
     else:
         config.train_path = train_path_default
