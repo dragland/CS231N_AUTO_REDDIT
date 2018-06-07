@@ -21,6 +21,7 @@ from keras.utils.vis_utils import plot_model
 from keras.callbacks import ModelCheckpoint
 from sklearn.metrics import confusion_matrix
 from vis.visualization import visualize_saliency
+plt.switch_backend('agg')
 
 NUM_CLASSES=20
 validation_path = "validation.json"
@@ -80,7 +81,7 @@ def create_model(size):
     model.add(layers.Dropout(0.5))
     model.add(layers.Dense(NUM_CLASSES, activation='softmax'))
     model.summary()
-    plot_model(model, to_file=model_output, show_shapes=True, show_layer_names=True)
+    #plot_model(model, to_file=model_output, show_shapes=True, show_layer_names=True)
     return model
 
 def plot_history(history):
