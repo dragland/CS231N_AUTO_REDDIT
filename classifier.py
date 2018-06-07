@@ -1,6 +1,6 @@
 #!//usr/bin/python
-#Adrien Truong | aqtruong@stanford.edu 
 #Davy Ragland | dragland@stanford.edu
+#Adrien Truong | aqtruong@stanford.edu
 #CS231N_REDDIT_NET | 2018
 
 #*********************************** SETUP *************************************
@@ -30,7 +30,7 @@ train_small_path_default = "small_train.json"
 validation_path = "validation.json"
 
 experiments_path ="experiments/"
-test_path = "test"
+test_path = "000"
 config_path = "/config.json"
 model_output = "/model_graph.png"
 model_history = "/test.h5"
@@ -215,14 +215,21 @@ if __name__ == "__main__":
     if len(sys.argv) <= 1:
         print('Invalid mode! Aborting...')
         print("example usage: ")
-        print("python classifier.py -p=01 -t -l=1e-5 -e -i=datasets/cats50.jpg")
+        print("python classifier.py -t -l=1e-5 -e -i=datasets/cats50.jpg")
 
     else:
-        config.path = experiments_path + test_path
         if config.p:
             config.path = experiments_path + config.p
-        if not os.path.isdir(config.path):
+            if not os.path.isdir(config.path):
+                os.mkdir(config.path);
+        else:
+            if os.listdir(experiments_path):
+                count = sorted(os.listdir(experiments_path))[-1]
+                config.path = experiments_path + str(int('9' + count) + 1)[1:]
+            else:
+                config.path = experiments_path + test_path
             os.mkdir(config.path);
+
         config.train_path = train_path_default
         if config.s:
             config.train_path = train_small_path_default
