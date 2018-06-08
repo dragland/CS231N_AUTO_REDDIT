@@ -91,23 +91,23 @@ def create_model(size):
     #plot_model(model, to_file=config.path + model_output, show_shapes=True, show_layer_names=True)
     return model
 
-def plot_history(history):
+def plot_history(history, config):
     plt.gcf().clear()
     plt.plot(history['acc'], 'ro', markersize=12)
     plt.plot(history['val_acc'], 'go', markersize=12)
-    plt.title('Training and validation accuracy')
+    plt.title('Training and validation accuracy' + str(config.lr))
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
+    plt.legend(['train', 'validation'], loc='upper left')
     plt.savefig(config.path + acc_output)
     # plt.show()
     plt.gcf().clear()
     plt.plot(history['loss'], 'ro', markersize=12)
     plt.plot(history['val_loss'], 'go', markersize=12)
-    plt.title('Training and validation loss')
+    plt.title('Training and validation loss of lr=' + str(config.lr))
     plt.ylabel('loss')
     plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
+    plt.legend(['train', 'validation'], loc='upper left')
     plt.savefig(config.path + loss_output)
     # plt.show()
 
@@ -180,7 +180,7 @@ def train(config):
 def evaluate(config):
     print("evaluating model...")
     with open(config.path + model_history, 'rb') as f:
-        plot_history(pickle.load(f))
+        plot_history(pickle.load(f), config)
     score(config)
     plot_confusion_matrix(config)
 
