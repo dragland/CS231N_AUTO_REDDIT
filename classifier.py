@@ -83,7 +83,7 @@ def create_model(size):
         layer.trainable = False
     model = models.Sequential()
     model.add(vgg_conv)
-    model.add(layers.Flatten())
+    model.add(layers.GlobalAveragePooling2D())
     model.add(layers.Dense(1024, activation='relu'))
     model.add(layers.Dropout(0.25))
     model.add(layers.Dense(NUM_CLASSES, activation='softmax'))
